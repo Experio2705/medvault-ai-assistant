@@ -1,11 +1,107 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Shield, Upload, Mic, Brain, Activity, Share, FileText, Clock, Users } from "lucide-react";
+import Hero from "@/components/Hero";
+import Dashboard from "@/components/Dashboard";
+import FileUpload from "@/components/FileUpload";
+import SymptomLogger from "@/components/SymptomLogger";
+import HealthTimeline from "@/components/HealthTimeline";
+import ShareRecords from "@/components/ShareRecords";
 
 const Index = () => {
+  const [activeSection, setActiveSection] = useState("hero");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+    setActiveSection("dashboard");
+  };
+
+  if (!isLoggedIn) {
+    return <Hero onLogin={handleLogin} />;
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+      {/* Header */}
+      <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-blue-100 sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-green-500 rounded-lg flex items-center justify-center">
+              <Shield className="h-5 w-5 text-white" />
+            </div>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+              MedVault
+            </h1>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="text-sm text-gray-600">Welcome, User</div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setIsLoggedIn(false)}
+              className="border-blue-200 hover:bg-blue-50"
+            >
+              Logout
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Sidebar Navigation */}
+          <div className="lg:col-span-1">
+            <Card className="bg-white/60 backdrop-blur-sm shadow-lg border-0 sticky top-24">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center space-x-2">
+                  <Activity className="h-5 w-5 text-blue-600" />
+                  <span>Navigation</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {[
+                  { id: "dashboard", label: "Dashboard", icon: Activity },
+                  { id: "upload", label: "Upload Files", icon: Upload },
+                  { id: "symptoms", label: "Log Symptoms", icon: Mic },
+                  { id: "timeline", label: "Health Timeline", icon: Clock },
+                  { id: "share", label: "Share Records", icon: Share },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Button
+                      key={item.id}
+                      variant={activeSection === item.id ? "default" : "ghost"}
+                      className={`w-full justify-start transition-all duration-200 ${
+                        activeSection === item.id
+                          ? "bg-gradient-to-r from-blue-600 to-green-500 text-white shadow-md"
+                          : "hover:bg-blue-50 text-gray-700"
+                      }`}
+                      onClick={() => setActiveSection(item.id)}
+                    >
+                      <Icon className="h-4 w-4 mr-2" />
+                      {item.label}
+                    </Button>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            <div className="space-y-6">
+              {activeSection === "dashboard" && <Dashboard />}
+              {activeSection === "upload" && <FileUpload />}
+              {activeSection === "symptoms" && <SymptomLogger />}
+              {activeSection === "timeline" && <HealthTimeline />}
+              {activeSection === "share" && <ShareRecords />}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
