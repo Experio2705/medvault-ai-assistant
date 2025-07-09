@@ -15,6 +15,7 @@ interface AIAnalysis {
   possible_conditions: string[];
   urgency: 'routine' | 'schedule_soon' | 'seek_immediate_care';
   confidence: number;
+  [key: string]: any; // Add index signature for Json compatibility
 }
 
 const AIHealthAssistant = () => {
@@ -48,13 +49,13 @@ const AIHealthAssistant = () => {
         confidence: 0.75
       };
 
-      // Save symptom to database
+      // Save symptom to database with proper type casting
       const { error } = await supabase.from('symptoms').insert({
         user_id: user.id,
         symptom_name: input.split(' ').slice(0, 3).join(' '),
         description: input,
         severity: mockAnalysis.severity === 'high' ? 4 : mockAnalysis.severity === 'medium' ? 3 : 2,
-        ai_suggestions: mockAnalysis,
+        ai_suggestions: mockAnalysis as any, // Cast to any for Json compatibility
         recorded_at: new Date().toISOString()
       });
 
