@@ -1,26 +1,50 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Upload, Mic, Brain, Activity, Share, FileText, Clock, Users } from "lucide-react";
+import { Shield, Upload, Mic, Brain, Activity, Share, FileText, Clock, Users, User, BarChart3 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import Hero from "@/components/Hero";
 import Dashboard from "@/components/Dashboard";
 import FileUpload from "@/components/FileUpload";
 import SymptomLogger from "@/components/SymptomLogger";
 import HealthTimeline from "@/components/HealthTimeline";
 import ShareRecords from "@/components/ShareRecords";
+import ProfileForm from "@/components/ProfileForm";
+import HealthAnalytics from "@/components/HealthAnalytics";
+import AIHealthAssistant from "@/components/AIHealthAssistant";
 
 const Index = () => {
-  const [activeSection, setActiveSection] = useState("hero");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [activeSection, setActiveSection] = useState("dashboard");
+  const { user, signOut, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/auth");
+    }
+  }, [user, loading, navigate]);
 
   const handleLogin = () => {
-    setIsLoggedIn(true);
-    setActiveSection("dashboard");
+    navigate("/auth");
   };
 
-  if (!isLoggedIn) {
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-green-500 rounded-full flex items-center justify-center mb-4 mx-auto animate-pulse">
+            <Shield className="h-8 w-8 text-white" />
+          </div>
+          <p className="text-gray-600">Loading MedVault...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
     return <Hero onLogin={handleLogin} />;
   }
 
@@ -38,11 +62,13 @@ const Index = () => {
             </h1>
           </div>
           <div className="flex items-center space-x-4">
-            <div className="text-sm text-gray-600">Welcome, User</div>
+            <div className="text-sm text-gray-600">
+              Welcome, {user.user_metadata?.first_name || user.email}
+            </div>
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => setIsLoggedIn(false)}
+              onClick={signOut}
               className="border-blue-200 hover:bg-blue-50"
             >
               Logout
@@ -65,6 +91,9 @@ const Index = () => {
               <CardContent className="space-y-2">
                 {[
                   { id: "dashboard", label: "Dashboard", icon: Activity },
+                  { id: "profile", label: "Profile", icon: User },
+                  { id: "analytics", label: "Health Analytics", icon: BarChart3 },
+                  { id: "ai-assistant", label: "AI Assistant", icon: Brain },
                   { id: "upload", label: "Upload Files", icon: Upload },
                   { id: "symptoms", label: "Log Symptoms", icon: Mic },
                   { id: "timeline", label: "Health Timeline", icon: Clock },
@@ -95,6 +124,9 @@ const Index = () => {
           <div className="lg:col-span-3">
             <div className="space-y-6">
               {activeSection === "dashboard" && <Dashboard />}
+              {activeSection === "profile" && <ProfileForm />}
+              {activeSection === "analytics" && <HealthAnalytics />}
+              {activeSection === "ai-assistant" && <AIHealthAssistant />}
               {activeSection === "upload" && <FileUpload />}
               {activeSection === "symptoms" && <SymptomLogger />}
               {activeSection === "timeline" && <HealthTimeline />}

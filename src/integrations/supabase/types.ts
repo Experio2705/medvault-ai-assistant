@@ -14,7 +14,174 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      health_metrics: {
+        Row: {
+          created_at: string | null
+          id: string
+          metric_type: string
+          notes: string | null
+          recorded_at: string | null
+          unit: string | null
+          user_id: string
+          value_numeric: number | null
+          value_text: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metric_type: string
+          notes?: string | null
+          recorded_at?: string | null
+          unit?: string | null
+          user_id: string
+          value_numeric?: number | null
+          value_text?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metric_type?: string
+          notes?: string | null
+          recorded_at?: string | null
+          unit?: string | null
+          user_id?: string
+          value_numeric?: number | null
+          value_text?: string | null
+        }
+        Relationships: []
+      }
+      medical_records: {
+        Row: {
+          ai_analysis: Json | null
+          created_at: string | null
+          date_recorded: string | null
+          description: string | null
+          extracted_text: string | null
+          file_name: string | null
+          file_size: number | null
+          file_url: string | null
+          id: string
+          record_type: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          created_at?: string | null
+          date_recorded?: string | null
+          description?: string | null
+          extracted_text?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          record_type: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_analysis?: Json | null
+          created_at?: string | null
+          date_recorded?: string | null
+          description?: string | null
+          extracted_text?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          record_type?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          allergies: string[] | null
+          created_at: string | null
+          current_medications: string[] | null
+          date_of_birth: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          medical_conditions: string[] | null
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          allergies?: string[] | null
+          created_at?: string | null
+          current_medications?: string[] | null
+          date_of_birth?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          medical_conditions?: string[] | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          allergies?: string[] | null
+          created_at?: string | null
+          current_medications?: string[] | null
+          date_of_birth?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          medical_conditions?: string[] | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      symptoms: {
+        Row: {
+          ai_suggestions: Json | null
+          created_at: string | null
+          description: string | null
+          duration_hours: number | null
+          id: string
+          location: string | null
+          recorded_at: string | null
+          severity: number | null
+          symptom_name: string
+          user_id: string
+        }
+        Insert: {
+          ai_suggestions?: Json | null
+          created_at?: string | null
+          description?: string | null
+          duration_hours?: number | null
+          id?: string
+          location?: string | null
+          recorded_at?: string | null
+          severity?: number | null
+          symptom_name: string
+          user_id: string
+        }
+        Update: {
+          ai_suggestions?: Json | null
+          created_at?: string | null
+          description?: string | null
+          duration_hours?: number | null
+          id?: string
+          location?: string | null
+          recorded_at?: string | null
+          severity?: number | null
+          symptom_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
