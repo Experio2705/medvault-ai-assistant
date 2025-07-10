@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +26,12 @@ interface ConversationState {
   stage: 'greeting' | 'symptom_gathering' | 'clarification' | 'analysis' | 'recommendation';
   symptoms: string[];
   context: Record<string, any>;
+  previousQuestions: string[];
+  userProfile: {
+    age?: number;
+    sex?: 'male' | 'female';
+    conditions?: string[];
+  };
 }
 
 const ConversationalHealthAssistant = () => {
@@ -37,7 +42,9 @@ const ConversationalHealthAssistant = () => {
   const [conversationState, setConversationState] = useState<ConversationState>({
     stage: 'greeting',
     symptoms: [],
-    context: {}
+    context: {},
+    previousQuestions: [],
+    userProfile: {}
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -51,7 +58,7 @@ const ConversationalHealthAssistant = () => {
   useEffect(() => {
     // Initial greeting
     if (messages.length === 0) {
-      addMessage('assistant', "Hello! I'm your AI health assistant. I'm here to help you understand your symptoms and provide medical guidance. How are you feeling today?");
+      addMessage('assistant', "Hello! I'm your AI health assistant. I can help you understand your symptoms and provide medical guidance. To get started, please tell me your age and gender, then describe how you're feeling today.");
     }
   }, []);
 
@@ -70,35 +77,41 @@ const ConversationalHealthAssistant = () => {
     setMessages(prev => [...prev, newMessage]);
   };
 
-  const processNaturalLanguage = (text: string) => {
+  const extractMedicalInfo = (text: string) => {
     const lowerText = text.toLowerCase();
     
-    // Extract symptoms using pattern matching
+    // Extract age
+    const ageMatch = text.match(/(?:i am|i'm|age)\s*(\d{1,3})|(\d{1,3})\s*(?:years?\s*old|yo)/i);
+    const age = ageMatch ? parseInt(ageMatch[1] || ageMatch[2]) : null;
+    
+    // Extract gender
+    const genderMatch = text.match(/(?:i am|i'm)\s*(male|female|man|woman)|(?:male|female|man|woman)/i);
+    const gender = genderMatch ? (genderMatch[1].toLowerCase().includes('m') ? 'male' : 'female') : null;
+    
+    // Extract symptoms with more comprehensive patterns
     const symptomPatterns = [
-      /(?:i have|experiencing|feeling|suffering from)\s+(.*?)(?:\.|$)/gi,
-      /(?:my|the)\s+(.*?)\s+(?:hurts?|aches?|pains?|is sore)/gi,
-      /(headache|fever|cough|nausea|dizzy|tired|fatigue|pain|ache)/gi,
-      /(chest pain|stomach ache|back pain|sore throat|runny nose)/gi
+      /(?:i have|experiencing|feeling|suffering from|i've been having)\s+([^.!?]+)/gi,
+      /(?:my|the)\s+([a-zA-Z\s]+)\s+(?:hurts?|aches?|pains?|is sore|feels|bothers?)/gi,
+      /(headache|fever|cough|nausea|dizzy|tired|fatigue|pain|ache|chest pain|stomach ache|back pain|sore throat|runny nose|congestion|shortness of breath|difficulty breathing|vomiting|diarrhea|constipation|rash|swelling|joint pain|muscle pain)/gi
     ];
 
     const extractedSymptoms: string[] = [];
     symptomPatterns.forEach(pattern => {
-      const matches = lowerText.match(pattern);
-      if (matches) {
-        matches.forEach(match => {
-          const cleaned = match.replace(/(?:i have|experiencing|feeling|suffering from|my|the|hurts?|aches?|pains?|is sore)/gi, '').trim();
-          if (cleaned && cleaned.length > 2) {
-            extractedSymptoms.push(cleaned);
-          }
-        });
-      }
+      const matches = Array.from(lowerText.matchAll(pattern));
+      matches.forEach(match => {
+        let symptom = match[1] || match[0];
+        symptom = symptom.replace(/(?:i have|experiencing|feeling|suffering from|i've been having|my|the|hurts?|aches?|pains?|is sore|feels|bothers?)/gi, '').trim();
+        if (symptom && symptom.length > 2 && !extractedSymptoms.includes(symptom)) {
+          extractedSymptoms.push(symptom);
+        }
+      });
     });
 
     // Extract severity indicators
     const severityPatterns = {
-      high: /(severe|terrible|excruciating|unbearable|intense|sharp)/gi,
-      medium: /(moderate|noticeable|bothersome|uncomfortable)/gi,
-      low: /(mild|slight|minor|little)/gi
+      high: /(severe|terrible|excruciating|unbearable|intense|sharp|extreme|worst)/gi,
+      medium: /(moderate|noticeable|bothersome|uncomfortable|bad)/gi,
+      low: /(mild|slight|minor|little|light)/gi
     };
 
     let severity = 'medium';
@@ -109,11 +122,13 @@ const ConversationalHealthAssistant = () => {
     });
 
     // Extract duration
-    const durationPattern = /(for\s+)?(\d+)\s+(hours?|days?|weeks?|minutes?)/gi;
+    const durationPattern = /(for\s+)?(\d+)\s+(hours?|days?|weeks?|months?|minutes?)/gi;
     const durationMatch = lowerText.match(durationPattern);
     const duration = durationMatch ? durationMatch[0] : null;
 
     return {
+      age,
+      gender,
       symptoms: extractedSymptoms,
       severity,
       duration,
@@ -123,75 +138,164 @@ const ConversationalHealthAssistant = () => {
 
   const determineIntent = (text: string) => {
     if (/(hello|hi|hey|good morning|good afternoon)/i.test(text)) return 'greeting';
-    if (/(yes|yeah|correct|right|that\'s right)/i.test(text)) return 'confirmation';
-    if (/(no|nope|incorrect|wrong|not really)/i.test(text)) return 'denial';
-    if (/(help|what should i do|advice|recommend)/i.test(text)) return 'seeking_help';
-    if (/(pain|hurt|ache|sick|ill|symptom)/i.test(text)) return 'symptom_report';
+    if (/(yes|yeah|correct|right|that\'s right|exactly)/i.test(text)) return 'confirmation';
+    if (/(no|nope|incorrect|wrong|not really|not exactly)/i.test(text)) return 'denial';
+    if (/(help|what should i do|advice|recommend|treatment|medicine)/i.test(text)) return 'seeking_help';
+    if (/(pain|hurt|ache|sick|ill|symptom|feel|feeling)/i.test(text)) return 'symptom_report';
+    if (/(\d+)\s*(?:years?\s*old|yo)|(?:i am|i'm)\s*(\d+)|(?:male|female|man|woman)/i.test(text)) return 'profile_info';
     return 'general';
   };
 
-  const generateContextualResponse = async (userInput: string, nlpResult: any) => {
-    const { stage } = conversationState;
+  const generateDynamicResponse = async (userInput: string, extractedInfo: any) => {
+    const { stage, symptoms, context, previousQuestions } = conversationState;
+    
+    // Update user profile if new info is provided
+    if (extractedInfo.age || extractedInfo.gender) {
+      setConversationState(prev => ({
+        ...prev,
+        userProfile: {
+          ...prev.userProfile,
+          age: extractedInfo.age || prev.userProfile.age,
+          sex: extractedInfo.gender || prev.userProfile.sex
+        }
+      }));
+    }
     
     switch (stage) {
       case 'greeting':
-        if (nlpResult.symptoms.length > 0) {
+        if (extractedInfo.age && extractedInfo.gender && extractedInfo.symptoms.length > 0) {
+          // Complete profile and symptoms in one go
           setConversationState(prev => ({
             ...prev,
             stage: 'symptom_gathering',
-            symptoms: [...prev.symptoms, ...nlpResult.symptoms],
-            context: { ...prev.context, severity: nlpResult.severity, duration: nlpResult.duration }
+            symptoms: [...prev.symptoms, ...extractedInfo.symptoms],
+            context: { ...prev.context, severity: extractedInfo.severity, duration: extractedInfo.duration }
           }));
           
-          return `I understand you're experiencing ${nlpResult.symptoms.join(', ')}. That sounds concerning. Can you tell me more about when this started and how severe it feels on a scale of 1-10?`;
+          return `Thank you for that information. So you're a ${extractedInfo.age}-year-old ${extractedInfo.gender} experiencing ${extractedInfo.symptoms.join(', ')}. ${extractedInfo.duration ? `You mentioned this has been going on ${extractedInfo.duration}. ` : ''}Can you rate the severity on a scale of 1-10, and tell me if there are any other symptoms I should know about?`;
+        } else if (extractedInfo.age || extractedInfo.gender) {
+          return `Thanks! I have your ${extractedInfo.age ? 'age as ' + extractedInfo.age : 'gender as ' + extractedInfo.gender}. ${extractedInfo.age && !extractedInfo.gender ? 'Could you also tell me your gender?' : !extractedInfo.age && extractedInfo.gender ? 'Could you also tell me your age?' : ''} Now, please describe any symptoms you're experiencing.`;
+        } else if (extractedInfo.symptoms.length > 0) {
+          setConversationState(prev => ({
+            ...prev,
+            symptoms: [...prev.symptoms, ...extractedInfo.symptoms],
+            context: { ...prev.context, severity: extractedInfo.severity, duration: extractedInfo.duration }
+          }));
+          return `I understand you're experiencing ${extractedInfo.symptoms.join(', ')}. To help you better, I'll need to know your age and gender first. This helps me provide more accurate medical guidance.`;
         } else {
-          return "I'm here to help with any health concerns you might have. Please describe any symptoms you're experiencing, and I'll do my best to provide guidance.";
+          return generateVariedGreeting(previousQuestions);
         }
 
       case 'symptom_gathering':
-        if (nlpResult.intent === 'confirmation' && conversationState.symptoms.length > 0) {
-          setConversationState(prev => ({ ...prev, stage: 'analysis' }));
-          return await performInfermedicaAnalysis();
-        } else if (nlpResult.symptoms.length > 0) {
-          setConversationState(prev => ({
-            ...prev,
-            symptoms: [...prev.symptoms, ...nlpResult.symptoms]
-          }));
-          return `I've noted ${nlpResult.symptoms.join(', ')} as well. Are there any other symptoms you'd like to mention? If not, I can analyze what you've told me so far.`;
-        } else {
-          return "Could you provide more details about your symptoms? For example, where exactly do you feel discomfort, and how long have you been experiencing this?";
+        if (extractedInfo.intent === 'confirmation') {
+          if (symptoms.length > 0 && conversationState.userProfile.age && conversationState.userProfile.sex) {
+            setConversationState(prev => ({ ...prev, stage: 'analysis' }));
+            return "Perfect! Let me analyze your symptoms now. This may take a moment...";
+          } else {
+            return "I still need your age and gender to proceed with the analysis. Could you please provide that information?";
+          }
+        } else if (extractedInfo.symptoms.length > 0) {
+          const newSymptoms = extractedInfo.symptoms.filter(s => !symptoms.includes(s));
+          if (newSymptoms.length > 0) {
+            setConversationState(prev => ({
+              ...prev,
+              symptoms: [...prev.symptoms, ...newSymptoms],
+              context: { ...prev.context, severity: extractedInfo.severity, duration: extractedInfo.duration }
+            }));
+            return `I've noted ${newSymptoms.join(', ')} as additional symptoms. ${extractedInfo.duration ? `Duration: ${extractedInfo.duration}. ` : ''}Are there any other symptoms you'd like to mention, or shall I analyze what you've told me so far?`;
+          }
         }
+        
+        return generateSymptomGatheringResponse(symptoms, extractedInfo);
 
       case 'analysis':
-        return "I'm currently analyzing your symptoms. Please wait a moment...";
+        if (symptoms.length > 0 && conversationState.userProfile.age && conversationState.userProfile.sex) {
+          return await performInfermedicaAnalysis();
+        } else {
+          setConversationState(prev => ({ ...prev, stage: 'symptom_gathering' }));
+          return "I need more information to perform the analysis. Please provide your symptoms, age, and gender.";
+        }
+
+      case 'clarification':
+        if (extractedInfo.intent === 'confirmation' || extractedInfo.intent === 'denial') {
+          return await performInfermedicaAnalysis();
+        }
+        return "Please answer the follow-up question with yes or no, or provide more details about your symptoms.";
 
       default:
-        return "I'm here to help with your health concerns. How are you feeling?";
+        return generateContextualResponse(userInput, extractedInfo);
     }
+  };
+
+  const generateVariedGreeting = (previousQuestions: string[]) => {
+    const greetings = [
+      "I'm here to help with your health concerns. Please start by telling me your age, gender, and describe any symptoms you're experiencing.",
+      "Let's work together to understand your health situation. First, I'll need your age and gender, then please describe how you're feeling.",
+      "To provide you with the best medical guidance, please share your age, gender, and tell me about any symptoms or discomfort you're having.",
+      "I'm ready to help analyze your symptoms. Could you please tell me your age, gender, and describe what's bothering you?"
+    ];
+    
+    return greetings[Math.floor(Math.random() * greetings.length)];
+  };
+
+  const generateSymptomGatheringResponse = (symptoms: string[], extractedInfo: any) => {
+    if (symptoms.length === 0) {
+      return "I haven't identified any specific symptoms yet. Could you describe what you're feeling? For example, do you have pain, discomfort, or any unusual sensations?";
+    }
+    
+    const responses = [
+      `Based on what you've shared about ${symptoms.join(', ')}, are there any other symptoms I should know about?`,
+      `You've mentioned ${symptoms.join(', ')}. How would you rate the severity, and are there any other concerns?`,
+      `I have ${symptoms.join(', ')} noted. Any additional symptoms or details about when this started?`,
+      `Thank you for sharing about ${symptoms.join(', ')}. Anything else you'd like to add before I analyze this?`
+    ];
+    
+    return responses[Math.floor(Math.random() * responses.length)];
+  };
+
+  const generateContextualResponse = (userInput: string, extractedInfo: any) => {
+    const responses = [
+      "I understand your concern. Could you provide more specific details about your symptoms?",
+      "That's helpful information. Can you tell me more about how this is affecting you?",
+      "I see. Let me gather a bit more information to help you better.",
+      "Thank you for sharing that. Could you elaborate on any other symptoms you might be experiencing?"
+    ];
+    
+    return responses[Math.floor(Math.random() * responses.length)];
   };
 
   const performInfermedicaAnalysis = async () => {
     try {
-      const symptoms = conversationState.symptoms.map(symptom => ({
+      const { symptoms, userProfile } = conversationState;
+      
+      if (symptoms.length === 0 || !userProfile.age || !userProfile.sex) {
+        return "I need your symptoms, age, and gender to perform a proper medical analysis. Could you please provide this information?";
+      }
+
+      const symptomData = symptoms.map(symptom => ({
         symptom_name: symptom,
         severity: 3
       }));
 
+      console.log('Sending to Infermedica:', { symptoms: symptomData, age: userProfile.age, sex: userProfile.sex });
+
       const { data, error } = await supabase.functions.invoke('infermedica-analysis', {
         body: {
-          symptoms: symptoms,
-          age: 30,
-          sex: 'male'
+          symptoms: symptomData,
+          age: userProfile.age,
+          sex: userProfile.sex
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Infermedica analysis error:', error);
+        return "I'm having trouble analyzing your symptoms right now. Based on what you've told me, I'd recommend consulting with a healthcare professional, especially if your symptoms persist or worsen.";
+      }
 
-      if (data.success) {
+      if (data?.success && data?.analysis) {
         const analysis = data.analysis;
         setConversationState(prev => ({ ...prev, stage: 'recommendation' }));
         
-        // Add analysis to message metadata
         const metadata = {
           conditions: analysis.conditions,
           urgency: getUrgencyLevel(analysis.conditions),
@@ -199,16 +303,18 @@ const ConversationalHealthAssistant = () => {
           follow_up_question: analysis.question?.text
         };
 
-        let response = "Based on my analysis of your symptoms, here are the most likely conditions:\n\n";
+        let response = `Based on my analysis of your symptoms, here are the most likely conditions:\n\n`;
         
-        analysis.conditions.slice(0, 3).forEach((condition: any, index: number) => {
-          response += `${index + 1}. **${condition.name}** (${Math.round(condition.probability * 100)}% likelihood)\n`;
-        });
+        if (analysis.conditions && analysis.conditions.length > 0) {
+          analysis.conditions.slice(0, 3).forEach((condition: any, index: number) => {
+            response += `${index + 1}. **${condition.name}** (${Math.round(condition.probability * 100)}% likelihood)\n`;
+          });
+        }
 
         response += "\n";
 
         if (analysis.question) {
-          response += `I have a follow-up question to better understand your condition: ${analysis.question.text}`;
+          response += `To refine my analysis: ${analysis.question.text}`;
           setConversationState(prev => ({ ...prev, stage: 'clarification' }));
         } else {
           response += getRecommendationText(metadata.urgency);
@@ -219,11 +325,13 @@ const ConversationalHealthAssistant = () => {
           addMessage('assistant', response, metadata);
         }, 100);
 
-        return "Let me analyze your symptoms using medical AI...";
+        return "Analyzing your symptoms using medical AI...";
+      } else {
+        return "I wasn't able to get a complete analysis. Based on your symptoms, I'd recommend consulting with a healthcare professional for a proper evaluation.";
       }
     } catch (error) {
       console.error('Analysis error:', error);
-      return "I'm having trouble analyzing your symptoms right now. Based on what you've told me, I'd recommend consulting with a healthcare professional, especially if your symptoms persist or worsen.";
+      return "I'm experiencing technical difficulties. For your safety, please consult with a healthcare professional about your symptoms.";
     }
   };
 
@@ -256,19 +364,26 @@ const ConversationalHealthAssistant = () => {
     // Add user message
     addMessage('user', userMessage);
 
+    // Update previous questions for context
+    setConversationState(prev => ({
+      ...prev,
+      previousQuestions: [...prev.previousQuestions, userMessage].slice(-5) // Keep last 5 questions
+    }));
+
     try {
-      // Process natural language
-      const nlpResult = processNaturalLanguage(userMessage);
+      // Extract medical information
+      const extractedInfo = extractMedicalInfo(userMessage);
+      console.log('Extracted info:', extractedInfo);
       
-      // Generate contextual response
-      const response = await generateContextualResponse(userMessage, nlpResult);
+      // Generate dynamic response
+      const response = await generateDynamicResponse(userMessage, extractedInfo);
       
       // Add assistant response
       addMessage('assistant', response);
       
     } catch (error) {
       console.error('Conversation error:', error);
-      addMessage('assistant', "I apologize, but I'm having trouble processing your message. Could you please rephrase your concern?");
+      addMessage('assistant', "I apologize, but I'm having trouble processing your message. Could you please rephrase your concern or try again?");
     }
 
     setLoading(false);
