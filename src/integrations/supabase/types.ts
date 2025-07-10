@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_usage_logs: {
+        Row: {
+          api_provider: string
+          created_at: string
+          endpoint: string | null
+          id: string
+          request_data: Json | null
+          response_data: Json | null
+          status_code: number | null
+          user_id: string
+        }
+        Insert: {
+          api_provider: string
+          created_at?: string
+          endpoint?: string | null
+          id?: string
+          request_data?: Json | null
+          response_data?: Json | null
+          status_code?: number | null
+          user_id: string
+        }
+        Update: {
+          api_provider?: string
+          created_at?: string
+          endpoint?: string | null
+          id?: string
+          request_data?: Json | null
+          response_data?: Json | null
+          status_code?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       health_metrics: {
         Row: {
           created_at: string | null
@@ -61,6 +94,8 @@ export type Database = {
           file_size: number | null
           file_url: string | null
           id: string
+          ocr_confidence: number | null
+          ocr_provider: string | null
           record_type: string
           title: string
           updated_at: string | null
@@ -76,6 +111,8 @@ export type Database = {
           file_size?: number | null
           file_url?: string | null
           id?: string
+          ocr_confidence?: number | null
+          ocr_provider?: string | null
           record_type: string
           title: string
           updated_at?: string | null
@@ -91,6 +128,8 @@ export type Database = {
           file_size?: number | null
           file_url?: string | null
           id?: string
+          ocr_confidence?: number | null
+          ocr_provider?: string | null
           record_type?: string
           title?: string
           updated_at?: string | null
@@ -146,10 +185,12 @@ export type Database = {
       symptoms: {
         Row: {
           ai_suggestions: Json | null
+          confidence_score: number | null
           created_at: string | null
           description: string | null
           duration_hours: number | null
           id: string
+          infermedica_analysis: Json | null
           location: string | null
           recorded_at: string | null
           severity: number | null
@@ -158,10 +199,12 @@ export type Database = {
         }
         Insert: {
           ai_suggestions?: Json | null
+          confidence_score?: number | null
           created_at?: string | null
           description?: string | null
           duration_hours?: number | null
           id?: string
+          infermedica_analysis?: Json | null
           location?: string | null
           recorded_at?: string | null
           severity?: number | null
@@ -170,10 +213,12 @@ export type Database = {
         }
         Update: {
           ai_suggestions?: Json | null
+          confidence_score?: number | null
           created_at?: string | null
           description?: string | null
           duration_hours?: number | null
           id?: string
+          infermedica_analysis?: Json | null
           location?: string | null
           recorded_at?: string | null
           severity?: number | null
