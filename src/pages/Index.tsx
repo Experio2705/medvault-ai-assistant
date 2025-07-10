@@ -15,6 +15,7 @@ import ShareRecords from "@/components/ShareRecords";
 import ProfileForm from "@/components/ProfileForm";
 import HealthAnalytics from "@/components/HealthAnalytics";
 import AIHealthAssistant from "@/components/AIHealthAssistant";
+import ConversationalHealthAssistant from "@/components/ConversationalHealthAssistant";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -93,7 +94,8 @@ const Index = () => {
                   { id: "dashboard", label: "Dashboard", icon: Activity },
                   { id: "profile", label: "Profile", icon: User },
                   { id: "analytics", label: "Health Analytics", icon: BarChart3 },
-                  { id: "ai-assistant", label: "AI Assistant", icon: Brain },
+                  { id: "conversational-ai", label: "Conversational AI", icon: Brain },
+                  { id: "ai-assistant", label: "Quick AI Assistant", icon: Brain },
                   { id: "upload", label: "Upload Files", icon: Upload },
                   { id: "symptoms", label: "Log Symptoms", icon: Mic },
                   { id: "timeline", label: "Health Timeline", icon: Clock },
@@ -126,6 +128,7 @@ const Index = () => {
               {activeSection === "dashboard" && <Dashboard />}
               {activeSection === "profile" && <ProfileForm />}
               {activeSection === "analytics" && <HealthAnalytics />}
+              {activeSection === "conversational-ai" && <ConversationalHealthAssistant />}
               {activeSection === "ai-assistant" && <AIHealthAssistant />}
               {activeSection === "upload" && <FileUpload />}
               {activeSection === "symptoms" && <SymptomLogger />}
