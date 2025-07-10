@@ -16,8 +16,13 @@ export const useVoiceToText = ({ onTranscript, onError }: UseVoiceToTextProps) =
       return;
     }
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognitionInstance = new SpeechRecognition();
+    const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognitionConstructor) {
+      onError?.('Speech recognition not available');
+      return;
+    }
+
+    const recognitionInstance = new SpeechRecognitionConstructor();
 
     recognitionInstance.continuous = true;
     recognitionInstance.interimResults = true;
@@ -27,7 +32,7 @@ export const useVoiceToText = ({ onTranscript, onError }: UseVoiceToTextProps) =
       setIsListening(true);
     };
 
-    recognitionInstance.onresult = (event) => {
+    recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
       let finalTranscript = '';
       
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -42,7 +47,7 @@ export const useVoiceToText = ({ onTranscript, onError }: UseVoiceToTextProps) =
       }
     };
 
-    recognitionInstance.onerror = (event) => {
+    recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
       onError?.(`Speech recognition error: ${event.error}`);
       setIsListening(false);
     };
