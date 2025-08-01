@@ -81,30 +81,6 @@ const Auth = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Try for Free Section */}
-            <div className="mb-6 text-center">
-              <h3 className="text-lg font-semibold text-white mb-2">Try MedVault for Free!</h3>
-              <div className="grid grid-cols-1 gap-2 text-sm text-white/80">
-                <div className="flex items-center justify-center">
-                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                  <span>AI Health Assistant</span>
-                </div>
-                <div className="flex items-center justify-center">
-                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                  <span>Symptom Tracking & Analysis</span>
-                </div>
-                <div className="flex items-center justify-center">
-                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                  <span>Voice Input & OCR</span>
-                </div>
-                <div className="flex items-center justify-center">
-                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                  <span>Secure Health Records</span>
-                </div>
-              </div>
-              <p className="text-xs text-white/60 mt-3">No credit card required • Start in seconds</p>
-            </div>
-
             {error && (
               <Alert className="mb-4 bg-red-500/20 border-red-400/50">
                 <AlertCircle className="h-4 w-4 text-red-400" />
@@ -153,14 +129,40 @@ const Auth = () => {
                       placeholder="Enter your password"
                     />
                   </div>
-                  <Button
-                    type="submit"
-                    className="w-full bg-white text-blue-600 hover:bg-white/90"
-                    disabled={isLoading}
-                  >
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Sign In
-                  </Button>
+                  <div className="flex flex-col space-y-4">
+                    <Button
+                      type="submit"
+                      className="w-full bg-white text-blue-600 hover:bg-white/90"
+                      disabled={isLoading}
+                    >
+                      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Sign In
+                    </Button>
+                    
+                    {/* Try for Free Section */}
+                    <div className="text-center py-3 border-t border-white/20">
+                      <h4 className="text-sm font-semibold text-white mb-2">Free Features:</h4>
+                      <div className="grid grid-cols-2 gap-2 text-xs text-white/80">
+                        <div className="flex items-center">
+                          <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5"></div>
+                          <span>AI Assistant</span>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5"></div>
+                          <span>Symptom Tracking</span>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5"></div>
+                          <span>Voice Input</span>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5"></div>
+                          <span>Secure Records</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-white/60 mt-2">No credit card required</p>
+                    </div>
+                  </div>
                 </form>
               </TabsContent>
 
