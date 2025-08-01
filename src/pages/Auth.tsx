@@ -81,6 +81,30 @@ const Auth = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Try for Free Section */}
+            <div className="mb-6 text-center">
+              <h3 className="text-lg font-semibold text-white mb-2">Try MedVault for Free!</h3>
+              <div className="grid grid-cols-1 gap-2 text-sm text-white/80">
+                <div className="flex items-center justify-center">
+                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                  <span>AI Health Assistant</span>
+                </div>
+                <div className="flex items-center justify-center">
+                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                  <span>Symptom Tracking & Analysis</span>
+                </div>
+                <div className="flex items-center justify-center">
+                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                  <span>Voice Input & OCR</span>
+                </div>
+                <div className="flex items-center justify-center">
+                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                  <span>Secure Health Records</span>
+                </div>
+              </div>
+              <p className="text-xs text-white/60 mt-3">No credit card required • Start in seconds</p>
+            </div>
+
             {error && (
               <Alert className="mb-4 bg-red-500/20 border-red-400/50">
                 <AlertCircle className="h-4 w-4 text-red-400" />
