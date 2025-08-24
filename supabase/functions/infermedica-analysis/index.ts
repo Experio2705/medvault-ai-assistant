@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const { symptoms, age, sex } = await req.json()
+    const { symptoms, age, sex, medicalHistory } = await req.json()
     
     if (!symptoms || symptoms.length === 0) {
       throw new Error('No symptoms provided')

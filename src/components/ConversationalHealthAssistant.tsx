@@ -136,6 +136,35 @@ const ConversationalHealthAssistant = () => {
     };
   };
 
+  // Helper function to fetch user documents for context
+  const fetchUserDocuments = async (): Promise<string> => {
+    try {
+      const { data: documents, error } = await supabase
+        .from('medical_records')
+        .select('title, description, extracted_text, record_type, date_recorded')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      if (!documents || documents.length === 0) {
+        return "No medical documents found in your records.";
+      }
+
+      return documents.map(doc => 
+        `Document: ${doc.title} (${doc.record_type})
+Date: ${doc.date_recorded || 'Not specified'}
+Description: ${doc.description || 'No description'}
+Content: ${doc.extracted_text || 'No extracted text available'}
+---`
+      ).join('\n\n');
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      return "Unable to access your medical documents at this time.";
+    }
+  };
+
   const determineIntent = (text: string) => {
     if (/(hello|hi|hey|good morning|good afternoon)/i.test(text)) return 'greeting';
     if (/(yes|yeah|correct|right|that\'s right|exactly)/i.test(text)) return 'confirmation';
@@ -148,6 +177,22 @@ const ConversationalHealthAssistant = () => {
 
   const generateDynamicResponse = async (userInput: string, extractedInfo: any) => {
     const { stage, symptoms, context, previousQuestions } = conversationState;
+    
+    // Check if user is asking about their documents or medical history
+    if (userInput.toLowerCase().includes('document') || 
+        userInput.toLowerCase().includes('record') || 
+        userInput.toLowerCase().includes('history') ||
+        userInput.toLowerCase().includes('report') ||
+        userInput.toLowerCase().includes('past') ||
+        userInput.toLowerCase().includes('previous') ||
+        userInput.toLowerCase().includes('uploaded') ||
+        userInput.toLowerCase().includes('file')) {
+      
+      const documents = await fetchUserDocuments();
+      const documentContext = `Based on your uploaded medical documents:\n\n${documents}`;
+      
+      return `${documentContext}\n\nI can see your medical documents and records. How can I help you understand or analyze this information?`;
+    }
     
     // Update user profile if new info is provided
     if (extractedInfo.age || extractedInfo.gender) {
@@ -277,13 +322,17 @@ const ConversationalHealthAssistant = () => {
         severity: 3
       }));
 
+      // Get user documents for additional context
+      const documents = await fetchUserDocuments();
+
       console.log('Sending to Infermedica:', { symptoms: symptomData, age: userProfile.age, sex: userProfile.sex });
 
       const { data, error } = await supabase.functions.invoke('infermedica-analysis', {
         body: {
           symptoms: symptomData,
           age: userProfile.age,
-          sex: userProfile.sex
+          sex: userProfile.sex,
+          medicalHistory: documents
         }
       });
 
@@ -422,7 +471,7 @@ const ConversationalHealthAssistant = () => {
           <span>Conversational Health Assistant</span>
         </CardTitle>
         <CardDescription>
-          Have a natural conversation about your health concerns with AI-powered medical insights
+          Have a natural conversation about your health concerns with AI-powered medical insights and document analysis
         </CardDescription>
       </CardHeader>
       

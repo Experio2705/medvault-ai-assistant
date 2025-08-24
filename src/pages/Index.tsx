@@ -14,7 +14,6 @@ import HealthTimeline from "@/components/HealthTimeline";
 import ShareRecords from "@/components/ShareRecords";
 import ProfileForm from "@/components/ProfileForm";
 import HealthAnalytics from "@/components/HealthAnalytics";
-import AIHealthAssistant from "@/components/AIHealthAssistant";
 import ConversationalHealthAssistant from "@/components/ConversationalHealthAssistant";
 
 const Index = () => {
@@ -95,7 +94,6 @@ const Index = () => {
                   { id: "profile", label: "Profile", icon: User },
                   { id: "analytics", label: "Health Analytics", icon: BarChart3 },
                   { id: "conversational-ai", label: "Conversational AI", icon: Brain },
-                  { id: "ai-assistant", label: "Quick AI Assistant", icon: Brain },
                   { id: "upload", label: "Upload Files", icon: Upload },
                   { id: "symptoms", label: "Log Symptoms", icon: Mic },
                   { id: "timeline", label: "Health Timeline", icon: Clock },
@@ -129,7 +127,6 @@ const Index = () => {
               {activeSection === "profile" && <ProfileForm />}
               {activeSection === "analytics" && <HealthAnalytics />}
               {activeSection === "conversational-ai" && <ConversationalHealthAssistant />}
-              {activeSection === "ai-assistant" && <AIHealthAssistant />}
               {activeSection === "upload" && <FileUpload />}
               {activeSection === "symptoms" && <SymptomLogger />}
               {activeSection === "timeline" && <HealthTimeline />}
