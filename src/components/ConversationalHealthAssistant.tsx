@@ -255,7 +255,7 @@ Content: ${doc.extracted_text || 'No extracted text available'}
 
       case 'analysis':
         if (symptoms.length > 0 && conversationState.userProfile.age && conversationState.userProfile.sex) {
-          return await performInfermedicaAnalysis();
+          return await performDocumentBasedAnalysis();
         } else {
           setConversationState(prev => ({ ...prev, stage: 'symptom_gathering' }));
           return "I need more information to perform the analysis. Please provide your symptoms, age, and gender.";
@@ -263,7 +263,7 @@ Content: ${doc.extracted_text || 'No extracted text available'}
 
       case 'clarification':
         if (extractedInfo.intent === 'confirmation' || extractedInfo.intent === 'denial') {
-          return await performInfermedicaAnalysis();
+          return await performDocumentBasedAnalysis();
         }
         return "Please answer the follow-up question with yes or no, or provide more details about your symptoms.";
 
@@ -309,7 +309,7 @@ Content: ${doc.extracted_text || 'No extracted text available'}
     return responses[Math.floor(Math.random() * responses.length)];
   };
 
-  const performInfermedicaAnalysis = async () => {
+  const performDocumentBasedAnalysis = async () => {
     try {
       const { symptoms, userProfile } = conversationState;
       
@@ -317,67 +317,73 @@ Content: ${doc.extracted_text || 'No extracted text available'}
         return "I need your symptoms, age, and gender to perform a proper medical analysis. Could you please provide this information?";
       }
 
-      const symptomData = symptoms.map(symptom => ({
-        symptom_name: symptom,
-        severity: 3
-      }));
-
       // Get user documents for additional context
       const documents = await fetchUserDocuments();
-
-      console.log('Sending to Infermedica:', { symptoms: symptomData, age: userProfile.age, sex: userProfile.sex });
-
-      const { data, error } = await supabase.functions.invoke('infermedica-analysis', {
-        body: {
-          symptoms: symptomData,
-          age: userProfile.age,
-          sex: userProfile.sex,
-          medicalHistory: documents
-        }
-      });
-
-      if (error) {
-        console.error('Infermedica analysis error:', error);
-        return "I'm having trouble analyzing your symptoms right now. Based on what you've told me, I'd recommend consulting with a healthcare professional, especially if your symptoms persist or worsen.";
-      }
-
-      if (data?.success && data?.analysis) {
-        const analysis = data.analysis;
-        setConversationState(prev => ({ ...prev, stage: 'recommendation' }));
+      
+      setConversationState(prev => ({ ...prev, stage: 'recommendation' }));
+      
+      let response = `Based on your reported symptoms and available medical documents, here's my analysis:\n\n`;
+      
+      // Analyze symptoms
+      response += `**Your Symptoms:** ${symptoms.join(', ')}\n`;
+      response += `**Profile:** ${userProfile.age}-year-old ${userProfile.sex}\n\n`;
+      
+      // Provide document-based insights
+      if (documents && !documents.includes("No medical documents found")) {
+        response += `**From Your Medical Records:**\n`;
+        response += `I've reviewed your uploaded medical documents and can provide context based on your medical history. `;
         
-        const metadata = {
-          conditions: analysis.conditions,
-          urgency: getUrgencyLevel(analysis.conditions),
-          confidence: analysis.confidence_score,
-          follow_up_question: analysis.question?.text
-        };
-
-        let response = `Based on my analysis of your symptoms, here are the most likely conditions:\n\n`;
+        // Check for relevant patterns in documents
+        const documentText = documents.toLowerCase();
+        const currentSymptoms = symptoms.map(s => s.toLowerCase());
         
-        if (analysis.conditions && analysis.conditions.length > 0) {
-          analysis.conditions.slice(0, 3).forEach((condition: any, index: number) => {
-            response += `${index + 1}. **${condition.name}** (${Math.round(condition.probability * 100)}% likelihood)\n`;
-          });
+        const foundRelevantInfo = currentSymptoms.some(symptom => 
+          documentText.includes(symptom) || 
+          documentText.includes(symptom.replace(/\s+/g, '')) ||
+          documentText.includes('chronic') ||
+          documentText.includes('history of')
+        );
+        
+        if (foundRelevantInfo) {
+          response += `Your current symptoms may be related to conditions mentioned in your medical history. `;
         }
-
-        response += "\n";
-
-        if (analysis.question) {
-          response += `To refine my analysis: ${analysis.question.text}`;
-          setConversationState(prev => ({ ...prev, stage: 'clarification' }));
-        } else {
-          response += getRecommendationText(metadata.urgency);
-        }
-
-        // Store the analysis metadata for the next message
-        setTimeout(() => {
-          addMessage('assistant', response, metadata);
-        }, 100);
-
-        return "Analyzing your symptoms using medical AI...";
+        
+        response += `Please discuss these symptoms with your healthcare provider who can review your complete medical history.\n\n`;
       } else {
-        return "I wasn't able to get a complete analysis. Based on your symptoms, I'd recommend consulting with a healthcare professional for a proper evaluation.";
+        response += `**No Medical History Available:**\nI don't have access to your previous medical records to provide historical context.\n\n`;
       }
+      
+      // Provide general guidance based on symptoms
+      response += `**General Guidance:**\n`;
+      
+      // Symptom severity assessment
+      const severeSymptoms = ['chest pain', 'difficulty breathing', 'severe pain', 'high fever', 'bleeding', 'confusion', 'severe headache'];
+      const hasSevereSymptoms = symptoms.some(symptom => 
+        severeSymptoms.some(severe => symptom.toLowerCase().includes(severe))
+      );
+      
+      if (hasSevereSymptoms) {
+        response += `🚨 **Urgent:** Some of your symptoms may require immediate medical attention. Please consider seeking emergency care or contacting your healthcare provider immediately.\n\n`;
+      } else {
+        response += `• Monitor your symptoms and note any changes\n`;
+        response += `• Stay hydrated and get adequate rest\n`;
+        response += `• Consider scheduling an appointment with your healthcare provider if symptoms persist or worsen\n\n`;
+      }
+      
+      response += `**Important Disclaimer:** This analysis is for informational purposes only and cannot replace professional medical advice. Please consult with a qualified healthcare professional for proper diagnosis and treatment.`;
+      
+      const metadata = {
+        conditions: [],
+        urgency: hasSevereSymptoms ? 'seek_immediate_care' : 'schedule_soon',
+        confidence: 0.7
+      };
+      
+      // Store the analysis metadata for the next message
+      setTimeout(() => {
+        addMessage('assistant', response, metadata);
+      }, 100);
+
+      return "Analyzing your symptoms and reviewing your medical documents...";
     } catch (error) {
       console.error('Analysis error:', error);
       return "I'm experiencing technical difficulties. For your safety, please consult with a healthcare professional about your symptoms.";
