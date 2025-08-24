@@ -123,7 +123,7 @@ const Index = () => {
           {/* Main Content */}
           <div className="lg:col-span-3">
             <div className="space-y-6">
-              {activeSection === "dashboard" && <Dashboard />}
+              {activeSection === "dashboard" && <Dashboard onNavigate={setActiveSection} />}
               {activeSection === "profile" && <ProfileForm />}
               {activeSection === "analytics" && <HealthAnalytics />}
               {activeSection === "conversational-ai" && <ConversationalHealthAssistant />}

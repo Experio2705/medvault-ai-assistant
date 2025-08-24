@@ -20,7 +20,11 @@ interface RecentActivity {
   status: string;
 }
 
-const Dashboard = () => {
+interface DashboardProps {
+  onNavigate?: (section: string) => void;
+}
+
+const Dashboard = ({ onNavigate }: DashboardProps) => {
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     medicalFiles: 0,
@@ -107,9 +111,15 @@ const Dashboard = () => {
   const quickActions = [
     { icon: Upload, label: "Upload Document", action: "upload", color: "bg-blue-100 hover:bg-blue-200 text-blue-700" },
     { icon: Mic, label: "Log Symptoms", action: "symptoms", color: "bg-green-100 hover:bg-green-200 text-green-700" },
-    { icon: Brain, label: "AI Analysis", action: "analyze", color: "bg-purple-100 hover:bg-purple-200 text-purple-700" },
+    { icon: Brain, label: "AI Analysis", action: "conversational-ai", color: "bg-purple-100 hover:bg-purple-200 text-purple-700" },
     { icon: Share, label: "Share Records", action: "share", color: "bg-orange-100 hover:bg-orange-200 text-orange-700" },
   ];
+
+  const handleQuickAction = (action: string) => {
+    if (onNavigate) {
+      onNavigate(action);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -159,6 +169,7 @@ const Dashboard = () => {
                   key={index}
                   variant="ghost"
                   className={`w-full justify-start h-12 ${action.color} transition-all duration-200`}
+                  onClick={() => handleQuickAction(action.action)}
                 >
                   <Icon className="h-5 w-5 mr-3" />
                   {action.label}
@@ -257,7 +268,10 @@ const Dashboard = () => {
               <p className="text-gray-700">Start by uploading medical records or logging symptoms to unlock AI-powered health insights.</p>
             </div>
           )}
-          <Button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
+          <Button 
+            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+            onClick={() => handleQuickAction("conversational-ai")}
+          >
             View AI Assistant
           </Button>
         </CardContent>
